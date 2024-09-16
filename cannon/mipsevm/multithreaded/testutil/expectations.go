@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ethereum-optimism/optimism/cannon/mipsevm/memory"
 	"github.com/ethereum-optimism/optimism/cannon/mipsevm/multithreaded"
 )
 
@@ -21,6 +22,7 @@ type ExpectedMTState struct {
 	Step           uint64
 	LastHint       hexutil.Bytes
 	MemoryRoot     common.Hash
+	expectedMemory *memory.Memory
 	// Threading-related expectations
 	StepsSinceLastContextSwitch uint64
 	Wakeup                      uint32
@@ -81,6 +83,7 @@ func NewExpectedMTState(fromState *multithreaded.State) *ExpectedMTState {
 		prestateActiveThreadOrig: *newExpectedThreadState(currentThread), // Cache prestate thread for internal use
 		ActiveThreadId:           currentThread.ThreadId,
 		threadExpectations:       expectedThreads,
+		expectedMemory:           fromState.Memory.Copy(),
 	}
 }
 
@@ -107,6 +110,17 @@ func (e *ExpectedMTState) ExpectStep() {
 	e.PrestateActiveThread().PC += 4
 	e.PrestateActiveThread().NextPC += 4
 	e.StepsSinceLastContextSwitch += 1
+}
+
+func (e *ExpectedMTState) ExpectMemoryWrite(addr uint32, val uint32) {
+	e.expectedMemory.SetMemory(addr, val)
+	e.MemoryRoot = e.expectedMemory.MerkleRoot()
+}
+
+func (e *ExpectedMTState) ExpectMemoryWriteMultiple(addr uint32, val uint32, addr2 uint32, val2 uint32) {
+	e.expectedMemory.SetMemory(addr, val)
+	e.expectedMemory.SetMemory(addr2, val)
+	e.MemoryRoot = e.expectedMemory.MerkleRoot()
 }
 
 func (e *ExpectedMTState) ExpectPreemption(preState *multithreaded.State) {

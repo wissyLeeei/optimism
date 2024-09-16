@@ -24,7 +24,6 @@ import { L1FeeVault } from "src/L2/L1FeeVault.sol";
 import { GasPriceOracle } from "src/L2/GasPriceOracle.sol";
 import { L1Block } from "src/L2/L1Block.sol";
 import { LegacyMessagePasser } from "src/legacy/LegacyMessagePasser.sol";
-import { GovernanceToken } from "src/governance/GovernanceToken.sol";
 import { FeeVault } from "src/universal/FeeVault.sol";
 import { WETH } from "src/L2/WETH.sol";
 import { SuperchainWETH } from "src/L2/SuperchainWETH.sol";
@@ -51,6 +50,8 @@ import { IProtocolVersions } from "src/L1/interfaces/IProtocolVersions.sol";
 import { IL1ERC721Bridge } from "src/L1/interfaces/IL1ERC721Bridge.sol";
 import { IOptimismMintableERC20Factory } from "src/universal/interfaces/IOptimismMintableERC20Factory.sol";
 import { IAddressManager } from "src/legacy/interfaces/IAddressManager.sol";
+import { IOptimismERC20Factory } from "src/L2/interfaces/IOptimismERC20Factory.sol";
+import { IGovernanceToken } from "src/governance/interfaces/IGovernanceToken.sol";
 
 /// @title Setup
 /// @dev This contact is responsible for setting up the contracts in state. It currently
@@ -104,10 +105,14 @@ contract Setup {
     GasPriceOracle gasPriceOracle = GasPriceOracle(Predeploys.GAS_PRICE_ORACLE);
     L1Block l1Block = L1Block(Predeploys.L1_BLOCK_ATTRIBUTES);
     LegacyMessagePasser legacyMessagePasser = LegacyMessagePasser(Predeploys.LEGACY_MESSAGE_PASSER);
-    GovernanceToken governanceToken = GovernanceToken(Predeploys.GOVERNANCE_TOKEN);
+    IGovernanceToken governanceToken = IGovernanceToken(Predeploys.GOVERNANCE_TOKEN);
     WETH weth = WETH(payable(Predeploys.WETH));
     SuperchainWETH superchainWeth = SuperchainWETH(payable(Predeploys.SUPERCHAIN_WETH));
     ETHLiquidity ethLiquidity = ETHLiquidity(Predeploys.ETH_LIQUIDITY);
+
+    // TODO: Replace with OptimismSuperchainERC20Factory when updating pragmas
+    IOptimismERC20Factory l2OptimismSuperchainERC20Factory =
+        IOptimismERC20Factory(Predeploys.OPTIMISM_SUPERCHAIN_ERC20_FACTORY);
 
     /// @dev Deploys the Deploy contract without including its bytecode in the bytecode
     ///      of this contract by fetching the bytecode dynamically using `vm.getCode()`.
@@ -227,6 +232,8 @@ contract Setup {
         labelPredeploy(Predeploys.WETH);
         labelPredeploy(Predeploys.SUPERCHAIN_WETH);
         labelPredeploy(Predeploys.ETH_LIQUIDITY);
+        labelPredeploy(Predeploys.OPTIMISM_SUPERCHAIN_ERC20_FACTORY);
+        labelPredeploy(Predeploys.OPTIMISM_SUPERCHAIN_ERC20_BEACON);
 
         // L2 Preinstalls
         labelPreinstall(Preinstalls.MultiCall3);
